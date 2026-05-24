@@ -23,3 +23,7 @@ npm run deploy
 ```
 
 Note: The app uses the browser SpeechSynthesis API for client-side TTS playback. Direct MP3 export is not available in a pure static GitHub Pages deployment without a backend service.
+
+## Download audio
+
+A download button is now available in the UI. It generates a client-side WAV file and saves it as `speech.wav`.

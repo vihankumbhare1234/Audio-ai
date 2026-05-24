@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import meSpeak from 'mespeak';
+import meSpeakConfig from 'mespeak/mespeak_config.json';
+import enVoice from 'mespeak/voices/en/en.json';
 
 const SUPPORTED = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
@@ -9,6 +12,13 @@ function App() {
   const [status, setStatus] = useState('ready');
   const [error, setError] = useState('');
   const [speaking, setSpeaking] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [generatingDownload, setGeneratingDownload] = useState(false);
+
+  useEffect(() => {
+    meSpeak.loadConfig(meSpeakConfig);
+    meSpeak.loadVoice(enVoice);
+  }, []);
 
   useEffect(() => {
     if (!SUPPORTED) {
@@ -65,6 +75,33 @@ function App() {
     setSpeaking(false);
   };
 
+  const generateDownload = () => {
+    if (!text.trim()) {
+      setError('Please enter some text first.');
+      return;
+    }
+
+    setError('');
+    setGeneratingDownload(true);
+    setDownloadUrl('');
+
+    try {
+      const dataUrl = meSpeak.speak(text, {
+        amplitude: 100,
+        wordgap: 1,
+        pitch: 50,
+        speed: 175,
+        rawdata: 'dataURL'
+      });
+
+      setDownloadUrl(dataUrl);
+    } catch (err) {
+      setError('Audio download generation failed.');
+    } finally {
+      setGeneratingDownload(false);
+    }
+  };
+
   return (
     <div className="app-shell">
       <header>
@@ -114,6 +151,19 @@ function App() {
           </div>
         </div>
 
+        <div className="field controls">
+          <div className="control-group buttons">
+            <button onClick={generateDownload} disabled={generatingDownload}>
+              {generatingDownload ? 'Generating...' : 'Generate Download'}
+            </button>
+            {downloadUrl && (
+              <a href={downloadUrl} download="speech.wav" className="download-link">
+                Download WAV
+              </a>
+            )}
+          </div>
+        </div>
+
         <div className="status-bar">
           <span>Status: {status}</span>
           <span>Browser support: {SUPPORTED ? 'Available' : 'Unavailable'}</span>
@@ -124,7 +174,7 @@ function App() {
         <section className="note-box">
           <h2>Note</h2>
           <p>
-            This is a client-side React app built for GitHub Pages. It uses the browser's SpeechSynthesis API for text-to-speech playback.
+            This app now generates a downloadable WAV file entirely in the browser. Playback still uses the browser SpeechSynthesis API.
           </p>
         </section>
       </main>
